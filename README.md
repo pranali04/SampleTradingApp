@@ -15,17 +15,17 @@
 
 ```mermaid
     graph TD
-    A[Client<br/>(Browser / React)] --> B[Frontend<br/>(NGINX + React App)]
-    B --> C[API Gateway<br/>(NGINX Proxy)]
-    C --> D[Auth Service<br/>(FastAPI + DB)]
-    C --> E[Market Data Service<br/>(FastAPI + WS)]
-    C --> F[Order Service<br/>(FastAPI REST)]
-    F --> G[FIX Engine Service<br/>(QuickFIX + Fiximulator)]
-    G --> I[Dummy Exchange Simulator<br/>(Fiximulator)]
-    F --> H[Notification Service<br/>(WS)]
-    E --> J[Database<br/>(PostgreSQL)]
-    F --> J
-    D --> J
-    H --> B
-    E --> B
+        A[Client<br/>(Browser / React)] --> B[Frontend<br/>(NGINX + React App)]
+        B --> C[API Gateway<br/>(NGINX Proxy)]
+        C --> D[Auth Service<br/>(FastAPI + DB)]
+        C --> E[Market Data Service<br/>(FastAPI + WS)]
+        C --> F[Order Service<br/>(FastAPI REST)]
+        F --> G[FIX Engine Service<br/>(QuickFIX + Fiximulator)]
+        G --> I[Dummy Exchange Simulator<br/>(Fiximulator)]
+        F --> H[Notification Service<br/>(WS)]
+        E --> J[Database<br/>(PostgreSQL)]
+        F --> J
+        D --> J
+        H --> B
+        E --> B
 ```
