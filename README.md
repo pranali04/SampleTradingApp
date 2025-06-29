@@ -1,31 +1,81 @@
 # Sample Trading Platform — Full Stack (FIX + WebSocket + Microservices)
-# A fully containerized mock trading system with:
 
-## Frontend: React (Vite) served via NGINX.
+A fully containerized mock trading system with:
 
-## API Gateway: NGINX reverse proxy.
+**Frontend:** React (Vite) served via NGINX.
 
-## Backend: Python FastAPI microservices for Auth, Orders, Market Data, FIX Engine.
+**API Gateway:** NGINX reverse proxy.
 
-## Notification Service: WebSocket server for real-time order updates.
+**Backend:** Python FastAPI microservices for Auth, Orders, Market Data, FIX Engine.
 
-## FIX Engine: QuickFIX + Fiximulator for dummy exchange simulation.
+**Notification Service:** WebSocket server for real-time order updates.
 
-## Database: PostgreSQL for users, orders, and market data.
+**FIX Engine:** QuickFIX + Fiximulator for dummy exchange simulation.
 
-```mermaid
-    graph TD
-        A[Client<br/>(Browser / React)] --> B[Frontend<br/>(NGINX + React App)]
-        B --> C[API Gateway<br/>(NGINX Proxy)]
-        C --> D[Auth Service<br/>(FastAPI + DB)]
-        C --> E[Market Data Service<br/>(FastAPI + WS)]
-        C --> F[Order Service<br/>(FastAPI REST)]
-        F --> G[FIX Engine Service<br/>(QuickFIX + Fiximulator)]
-        G --> I[Dummy Exchange Simulator<br/>(Fiximulator)]
-        F --> H[Notification Service<br/>(WS)]
-        E --> J[Database<br/>(PostgreSQL)]
-        F --> J
-        D --> J
-        H --> B
-        E --> B
-```
+**Database:** PostgreSQL for users, orders, and market data.
+
+Client (React)
+  ↓
+Frontend (NGINX + React)
+  ↓
+API Gateway (NGINX)
+  ├─→ Auth Service (FastAPI) → PostgreSQL
+  ├─→ Market Data Service (WebSockets) → PostgreSQL
+  └─→ Order Service (REST)
+       ├─→ FIX Engine → Dummy Exchange (Fiximulator)
+       ├─→ Notifications (WebSockets → Frontend)
+       └─→ PostgreSQL
+
+
+       
+| Service           | Tech Stack                       | Purpose                                                                   |
+| ----------------- | -------------------------------- | ------------------------------------------------------------------------- |
+| **Frontend**      | React + Vite + NGINX             | UI for login/register, market data, order entry, order status.            |
+| **API Gateway**   | NGINX                            | Routes `/auth/`, `/orders/`, `/marketdata/`, `/notifications/` to backend |
+| **Auth Service**  | FastAPI + JWT + PostgreSQL       | User registration, login, secure JWT generation.                          |
+| **Market Data**   | FastAPI + WebSocket + PostgreSQL | Provides live price feeds & market search.                                |
+| **Order Service** | FastAPI + PostgreSQL + REST      | Handles new/amend/cancel orders, persists orders, talks to FIX Engine.    |
+| **FIX Engine**    | QuickFIX/py + Fiximulator        | Simulates order lifecycle: Ack → Partial Fill → Fill → Cancel/Amend.      |
+| **Notification**  | FastAPI + WebSocket              | Pushes real-time order status to frontend.                                |
+| **Database**      | PostgreSQL                       | Single DB for users, orders, and market data.                             |
+
+**Clone this repo**
+git clone https://your-repo-url.git
+cd mock-trading-platform
+
+**.env (recommended)**
+Create .env or Docker secrets for:
+DATABASE_URL=postgresql+psycopg2://user:pass@db:5432/trading_db
+JWT_SECRET=YOUR_SECURE_SECRET
+
+**Build and run with Docker Compose**
+docker-compose up --build
+
+This will:
+Build all services
+Run them in separate containers
+Connect them on trading_net network
+
+**Access the UI**
+Visit: http://localhost:3000
+Register a new user
+Log in → get JWT
+Subscribe to market data
+Place/amend/cancel orders
+View live order status updates
+
+**Security Best Practices**
+Use strong JWT secret keys and rotate them periodically.
+
+Use HTTPS for the Gateway in production.
+
+Run NGINX reverse proxy for TLS termination.
+
+Secure DB with user/password & Docker secrets.
+
+**Useful Commands**
+Action	Command
+Build & run all services	 docker-compose up --build
+Stop all services	         docker-compose down
+View logs	                 docker-compose logs -f
+Exec into container	         docker exec -it <container_name> /bin/sh
