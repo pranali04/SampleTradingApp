@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+*.min.js
+
+# Logs and debug files
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+.env.production
+
+# IDE
+.vscode/
+.idea/
+
+# Docker files (if in subdirectory)
+Dockerfile
+docker-compose.yml

@@ -1,0 +1,100 @@
+version: "3.9"
+
+services:
+  api_gateway:
+    image: nginx:latest
+    volumes:
+      - ./api_gateway/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - order_service
+      - auth_service
+      - market_data_service
+      - notification_service
+    networks:
+      - trading_net
+
+  auth_service:
+    build: ./auth_service
+    depends_on:
+      - db
+    ports:
+      - "8003:8003"
+    networks:
+      - trading_net
+      
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: trading_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  order_service:
+    build: ./order_service
+    depends_on:
+      - db
+      - fix_engine_service
+    environment:
+      DATABASE_URL: postgresql+psycopg2://user:pass@db:5432/trading_db
+    ports:
+      - "8001:8000"
+    networks:
+      - trading_net
+
+  fix_engine_service:
+    build: ./fix_engine_service
+    depends_on:
+      - fiximulator
+    environment:
+      FIXIMULATOR_HOST: fiximulator
+      FIXIMULATOR_PORT: 5001
+    ports:
+      - "9000:9000"  # For REST API that Order Service calls
+    networks:
+      - trading_net
+    volumes:
+      - ./fix_engine_service/store:/app/store 
+
+  fiximulator:
+    image: quickfix/fiximulator:latest
+    container_name: fiximulator
+    volumes:
+      - ./fiximulator/acceptor.cfg:/app/acceptor.cfg
+    command: ["fiximulator", "-f", "/app/acceptor.cfg"]
+    ports:
+      - "5001:5001"
+    networks:
+      - trading_net
+
+  notification_service:
+    build: ./notification_service
+    ports:
+      - "8004:8004"
+    networks:
+      - trading_net
+
+  market_data_service:
+    build: ./market_data_service
+    ports:
+      - "8002:8002"
+    networks:
+      - trading_net
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    networks:
+      - trading_net
+
+networks:
+  trading_net:
+
+volumes:
+  pgdata:
