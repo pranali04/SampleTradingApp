@@ -1,55 +1,46 @@
-// src/components/OrderForm.js
-import React, { useState } from 'react';
-const token = localStorage.getItem('access_token');
+import { useState } from 'react';
+import axios from 'axios';
 
 export default function OrderForm({ token }) {
-  const [symbol, setSymbol] = useState("AAPL");
-  const [quantity, setQuantity] = useState(100);
-  const [side, setSide] = useState("BUY");
-  const [price, setPrice] = useState(185.75);
-  const [orderType, setOrderType] = useState("LIMIT");
-  const [clientID, setClientID] = useState("CLIENT123");
-  const [timeInForce, setTimeInForce] = useState("GTC");
-  const [venue, setVenue] = useState("NASDAQ");
-  const [customTags, setCustomTags] = useState("");
+  const [form, setForm] = useState({
+    symbol: '',
+    side: '',
+    quantity: 0,
+    price: 0.0,
+    orderType: '',
+    clientId: '',
+    timeInForce: '',
+    venue: '',
+    customTags: '',
+  });
 
-  async function placeOrder() {
-    const payload = {
-      symbol, side, quantity, price, orderType,
-      clientID, timeInForce, venue,
-      customTags: JSON.parse(customTags || "{}")
-    };
-    
-    const res = await fetch('/orders', {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const submitOrder = async (type) => {
+    const url = `/api/order/${type}`;
+    await axios.post(url, form, {
+      headers: { Authorization: `Bearer ${token}` }
     });
-
-    const data = await res.json();
-    console.log("Order placed:", data);
-  }
+    alert(`${type} order submitted`);
+  };
 
   return (
     <div>
-      <h2>New Order</h2>
-      <input value={symbol} onChange={e => setSymbol(e.target.value)} placeholder="Symbol" /><br/>
-      <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="Quantity" /><br/>
-      <select value={side} onChange={e => setSide(e.target.value)}>
-        <option>BUY</option><option>SELL</option>
-      </select><br/>
-      <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="Price" /><br/>
-      <select value={orderType} onChange={e => setOrderType(e.target.value)}>
-        <option>LIMIT</option><option>MARKET</option>
-      </select><br/>
-      <input value={clientID} onChange={e => setClientID(e.target.value)} placeholder="ClientID" /><br/>
-      <input value={timeInForce} onChange={e => setTimeInForce(e.target.value)} placeholder="TimeInForce" /><br/>
-      <input value={venue} onChange={e => setVenue(e.target.value)} placeholder="Venue" /><br/>
-      <textarea value={customTags} onChange={e => setCustomTags(e.target.value)} placeholder='{"strategy":"TWAP"}'></textarea><br/>
-      <button onClick={placeOrder}>Place Order</button>
+      {/* Inputs for form fields */}
+      <input name="symbol" onChange={handleChange} placeholder="Symbol" />
+      <input name="side" onChange={handleChange} placeholder="Side" />
+      <input name="quantity" type="number" onChange={handleChange} placeholder="Qty" />
+      <input name="price" type="number" onChange={handleChange} placeholder="Price" />
+      <input name="orderType" onChange={handleChange} placeholder="Order Type" />
+      <input name="clientId" onChange={handleChange} placeholder="Client ID" />
+      <input name="timeInForce" onChange={handleChange} placeholder="Time In Force" />
+      <input name="venue" onChange={handleChange} placeholder="Venue" />
+      <input name="customTags" onChange={handleChange} placeholder="Custom Tags" />
+      <button onClick={() => submitOrder('new')}>New Order</button>
+      <button onClick={() => submitOrder('amend')}>Amend Order</button>
+      <button onClick={() => submitOrder('cancel')}>Cancel Order</button>
     </div>
   );
 }

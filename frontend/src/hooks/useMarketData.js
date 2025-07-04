@@ -1,23 +1,18 @@
-// src/hooks/useMarketData.js
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
-export default function useMarketData(setData, symbols) {
+export function useMarketData(token) {
+  const [marketData, setMarketData] = useState([]);
+
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8002/ws/marketdata");
-
-    ws.onopen = () => {
-      console.log("Market Data WebSocket connected");
-      if (symbols && symbols.length > 0) {
-        ws.send(JSON.stringify({ symbols })); // optional
-      }
+    const fetchData = async () => {
+      const res = await axios.get('/api/marketdata/all', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMarketData(res.data);
     };
+    fetchData();
+  }, [token]);
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Market Data:", data);
-      setData(data);
-    };
-
-    return () => ws.close();
-  }, [setData, symbols]);
+  return marketData;
 }

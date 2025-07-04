@@ -1,6 +1,17 @@
-FROM python:3.11-slim
+FROM eclipse-temurin:17-jdk
+
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]
+
+COPY gradlew .
+COPY gradle ./gradle
+COPY build.gradle .
+COPY settings.gradle .
+COPY src ./src
+
+RUN chmod +x gradlew
+RUN ./gradlew bootJar
+# RUN ./gradlew build -x test
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "build/libs/order_service-0.0.1-SNAPSHOT.jar"]

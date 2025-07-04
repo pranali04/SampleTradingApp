@@ -1,100 +1,111 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  api_gateway:
-    image: nginx:latest
-    volumes:
-      - ./api_gateway/nginx.conf:/etc/nginx/nginx.conf
-    ports:
-      - "80:80"
-    depends_on:
-      - order_service
-      - auth_service
-      - market_data_service
-      - notification_service
-    networks:
-      - trading_net
-
-  auth_service:
-    build: ./auth_service
-    depends_on:
-      - db
-    ports:
-      - "8003:8003"
-    networks:
-      - trading_net
-      
   db:
-    image: postgres:14
+    image: postgres:15
+    container_name: db
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: trading_db
+      # POSTGRES_USER: trader
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: trading
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/002_seed.sql:ro
+    networks:
+      - trading_net
 
   order_service:
     build: ./order_service
+    container_name: order_service
     depends_on:
       - db
       - fix_engine_service
     environment:
-      DATABASE_URL: postgresql+psycopg2://user:pass@db:5432/trading_db
+      DB_HOST: trading
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      FIX_HOST: fix_engine_service
+      FIX_PORT: 5001
     ports:
-      - "8001:8000"
+      - "8080:8080"
     networks:
       - trading_net
 
   fix_engine_service:
     build: ./fix_engine_service
+    container_name: fix_engine_service
     depends_on:
-      - fiximulator
-    environment:
-      FIXIMULATOR_HOST: fiximulator
-      FIXIMULATOR_PORT: 5001
-    ports:
-      - "9000:9000"  # For REST API that Order Service calls
-    networks:
-      - trading_net
-    volumes:
-      - ./fix_engine_service/store:/app/store 
-
-  fiximulator:
-    image: quickfix/fiximulator:latest
-    container_name: fiximulator
-    volumes:
-      - ./fiximulator/acceptor.cfg:/app/acceptor.cfg
-    command: ["fiximulator", "-f", "/app/acceptor.cfg"]
+      - db
     ports:
       - "5001:5001"
     networks:
       - trading_net
 
-  notification_service:
-    build: ./notification_service
+  market_data_service:
+    build: ./market_data_service
+    container_name: market_data_service
+    depends_on:
+      - db
     ports:
-      - "8004:8004"
+      - "8082:8082"    # REST API
+      - "9002:8083"    # WebSocket for price streaming
     networks:
       - trading_net
 
-  market_data_service:
-    build: ./market_data_service
+  auth_service:
+    build: ./auth_service
+    container_name: auth_service
+    depends_on:
+      - db
+    environment:
+      DB_HOST: trading
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: supersecretjwt
     ports:
-      - "8002:8002"
+      - "8084:8084"
+    networks:
+      - trading_net
+
+  notification_service:
+    build: ./notification_service
+    container_name: notification_service
+    depends_on:
+      - db
+    ports:
+      - "8083:8083"
     networks:
       - trading_net
 
   frontend:
     build: ./frontend
+    container_name: frontend
+    depends_on:
+      - api_gateway
     ports:
       - "3000:80"
     networks:
       - trading_net
 
+  api_gateway:
+    container_name: api_gateway
+    build:
+      context: ./api_gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - auth_service
+      - order_service
+      - market_data_service
+      - notification_service
+      - fix_engine_service
+    networks:
+      - trading_net
+
 networks:
   trading_net:
-
-volumes:
-  pgdata:
+    driver: bridge

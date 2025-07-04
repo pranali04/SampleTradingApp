@@ -1,14 +1,25 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
 
-export default function useOrderStatus(setStatus) {
+export function useOrderStatus() {
+  const [orderStatus, setOrderStatus] = useState([]);
+
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8004/ws/notifications");
-    ws.onopen = () => console.log("Notification WS connected");
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Notification:", data);
-      setStatus(data);
+    const socket = new SockJS('/ws'); // Proxy through API Gateway
+    const stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, () => {
+      stompClient.subscribe('/topic/order-status', (message) => {
+        const statusUpdate = JSON.parse(message.body);
+        setOrderStatus((prev) => [...prev, statusUpdate]);
+      });
+    });
+
+    return () => {
+      stompClient.disconnect();
     };
-    return () => ws.close();
-  }, [setStatus]);
+  }, []);
+
+  return orderStatus;
 }

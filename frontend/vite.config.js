@@ -5,13 +5,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/auth': 'http://api_gateway',
-      '/orders': 'http://api_gateway',
-      '/marketdata': 'http://api_gateway',
-      '/notifications': {
-        target: 'ws://api_gateway',
-        ws: true,
+      '/api': 'http://api_gateway:8080',
+      '/ws': {
+        target: 'http://notification_service:8083',
+        ws: true
       },
-    },
-  },
+      '/auth': 'http://api_gateway:8080',
+    }
+  }
 });
