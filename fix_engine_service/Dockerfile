@@ -10,6 +10,9 @@ COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 COPY src ./src
+COPY src/main/resources/acceptor.cfg /app/
+COPY src/main/resources/FIX42.xml      /app/
+
 
 # ✅ 4. Make gradlew executable
 RUN chmod +x gradlew
