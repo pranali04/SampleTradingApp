@@ -13,7 +13,7 @@ import java.io.InputStream;
 public class FixEngineApplication {
 
     public static void main(String[] args) throws Exception {
-        InputStream inputStream = FixEngineApplication.class.getResourceAsStream("src/main/resources/acceptor.cfg");
+        InputStream inputStream = FixEngineApplication.class.getResourceAsStream("acceptor.cfg");
         SessionSettings settings = new SessionSettings(inputStream);
 
         Application application = new FixAppLogic(); // your implementation

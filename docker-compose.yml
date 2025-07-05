@@ -84,8 +84,8 @@ services:
   frontend:
     build: ./frontend
     container_name: frontend
-    depends_on:
-      - api_gateway
+    # depends_on:
+    #   - api_gateway
     ports:
       - "3000:80"
     networks:
@@ -98,6 +98,7 @@ services:
     ports:
       - "80:80"
     depends_on:
+      - frontend
       - auth_service
       - order_service
       - market_data_service

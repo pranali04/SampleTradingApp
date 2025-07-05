@@ -1,52 +1,75 @@
 package com.example.order.fix;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-import quickfix.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
+import quickfix.*;
+import com.example.order.fix.FixMessageHandler;
 import java.io.InputStream;
 
-@Slf4j
-@Component
-@RequiredArgsConstructor
+@Configuration
 public class FixInitiator {
 
-    private final FixMessageHandler handler;
-
-    private SocketInitiator initiator;
-
-    // public FixInitiator(FixMessageHandler handler) {
-    //     this.handler = handler;
-    // }
-
-    @PostConstruct
-    public void start() throws ConfigError {
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("src/main/resources/quickfixj.cfg");
-        SessionSettings settings = new SessionSettings(inputStream);
-
-        MessageStoreFactory storeFactory = new FileStoreFactory(settings);
-        LogFactory logFactory = new FileLogFactory(settings);
-        MessageFactory messageFactory = new DefaultMessageFactory();
-        // FixMessageHandler application = new FixMessageHandler();
-        this.initiator = new SocketInitiator(handler, storeFactory, settings, logFactory, messageFactory);
-        initiator.start();
-
-        log.info("QuickFIX/J Initiator started");
-    }
-
-    @PreDestroy
-    public void stop() {
-        if (initiator != null) {
-            initiator.stop();
-            log.info("QuickFIX/J Initiator stopped");
+    /**
+     * Load quickfixj.cfg from src/main/resources and expose as a Spring bean.
+     */
+    @Bean
+    public SessionSettings sessionSettings() throws Exception {
+        ClassPathResource cfg = new ClassPathResource("quickfixj.cfg");
+        try (InputStream is = cfg.getInputStream()) {
+            return new SessionSettings(is);
         }
     }
 
-    // public void send(Message msg, SessionID sessionID) throws SessionNotFound {
-    //     initiator.send(msg, sessionID);
+    /**
+     * File-based message store factory.
+     */
+    @Bean
+    public MessageStoreFactory messageStoreFactory(SessionSettings settings) {
+        return new FileStoreFactory(settings);
+    }
+
+    /**
+     * File-based log factory.
+     */
+    @Bean
+    public LogFactory logFactory(SessionSettings settings) {
+        return new FileLogFactory(settings);
+    }
+
+    /**
+     * Default FIX message factory.
+     */
+    @Bean
+    public MessageFactory messageFactory() {
+        return new DefaultMessageFactory();
+    }
+
+    /**
+     * Your Application implementation (OrderFixApp) needs to be a bean too.
+     */
+    // @Bean
+    // public Application fixApplication(FixMessageHandler handler) {
+    //     return new FixMessageHandler(handler);
     // }
+
+    /**
+     * SocketInitiator as a bean—starts at init, stops at shutdown.
+     */
+    @Bean(initMethod = "start", destroyMethod = "stop")
+    public Initiator socketInitiator(
+            SessionSettings settings,
+            MessageStoreFactory storeFactory,
+            LogFactory logFactory,
+            MessageFactory messageFactory,
+            FixMessageHandler application
+    ) throws ConfigError {
+        return new SocketInitiator(
+            application,
+            storeFactory,
+            settings,
+            logFactory,
+            messageFactory
+        );
+    }
 }

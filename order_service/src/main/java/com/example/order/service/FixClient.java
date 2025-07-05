@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import quickfix.*;
 import com.example.order.fix.FixInitiator;
 import quickfix.SessionID;
+import quickfix.Session;
+import quickfix.SessionSettings;
 import quickfix.SessionNotFound;
 import quickfix.field.*;
 import quickfix.fix44.NewOrderSingle;
@@ -14,21 +16,40 @@ import quickfix.fix44.OrderCancelReplaceRequest;
 import quickfix.fix44.OrderCancelRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 
 @Slf4j
 @Service
 @Component
-@RequiredArgsConstructor
+// @RequiredArgsConstructor
 public class FixClient {
 
     private final FixInitiator fixInitiator;
-    private final SessionID sessionID;
+    private final SessionSettings settings;
+    private SessionID sessionID;
 
-    public FixClient(FixInitiator fixInitiator, @Value("${fix.session.id}") String sessionIdStr) {
+    public FixClient(FixInitiator fixInitiator,
+                     SessionSettings settings) {
         this.fixInitiator = fixInitiator;
-        String[] parts = sessionIdStr.split(":");
-        this.sessionID = new SessionID(parts[0], parts[1], parts[2]);
+        this.settings = settings;
     }
+
+    @PostConstruct
+    public void init() {
+        var iter = settings.sectionIterator();
+        if (!iter.hasNext()) {
+            throw new IllegalStateException("No FIX sessions defined in quickfixj.cfg");
+        }
+        this.sessionID = iter.next();
+    }
+    // @Autowired
+    // public FixClient(FixInitiator fixInitiator, @Value("${fix.session.id}") String sessionIdStr) {
+    //     this.fixInitiator = fixInitiator;
+    //     String[] parts = sessionIdStr.split(":");
+    //     this.sessionID = new SessionID(parts[0], parts[1], parts[2]);
+    // }
 
     public void sendNewOrder(OrderEntity order) {
         try {
