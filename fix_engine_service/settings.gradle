@@ -1,1 +1,10 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    plugins {
+        id 'org.springframework.boot' version '3.2.5'
+    }
+}
 rootProject.name = 'fix_engine_service'

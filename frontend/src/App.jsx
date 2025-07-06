@@ -1,9 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
-import MarketDashboard from './components/MarketDashboard';
+import MarketDashboard from './components/MarketDataDashboard';
 import OrderForm from './components/OrderForm';
-import OrderStatus from './components/OrderStatus';
+// import OrderStatus from './components/OrderStatus';
 
 function App() {
   return (
@@ -17,7 +17,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<MarketDashboard />} />
         <Route path="/order" element={<OrderForm />} />
-        <Route path="/status" element={<OrderStatus />} />
+        {/*<Route path="/status" element={<OrderStatus />} />*/}
 
         {/* Catch‑all: also redirect any unknown path to /login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
