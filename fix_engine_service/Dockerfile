@@ -10,15 +10,14 @@ COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 COPY src ./src
-COPY src/main/resources/acceptor.cfg /app/
-COPY src/main/resources/FIX42.xml      /app/
 
 
 # ✅ 4. Make gradlew executable
 RUN chmod +x gradlew
 
 # ✅ 5. Build the Spring Boot JAR
-RUN ./gradlew clean build -x test
+RUN ./gradlew bootJar
+# RUN ./gradlew clean build -x test
 
 # ✅ 6. Expose the default FIX port (e.g., 9876) & app port if you have one
 EXPOSE 5001

@@ -9,11 +9,18 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Redirect root to /login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Your existing routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<MarketDashboard />} />
         <Route path="/order" element={<OrderForm />} />
         <Route path="/status" element={<OrderStatus />} />
+
+        {/* Catch‑all: also redirect any unknown path to /login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );
